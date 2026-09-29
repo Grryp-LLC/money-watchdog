@@ -60,7 +60,8 @@ Go item by item and say what you'll do before you do it. `ledger.py set <id> --s
   If they stop halfway, leave it open and say where you left off.
 
 ## 3c. Snooze or ignore
-- Snooze: `ledger.py set <id> --status snoozed --snooze-until <today + 7 days>`.
+- Snooze: `ledger.py set <id> --status snoozed --snooze-until YYYY-MM-DD` (today + 7 days, or the date the owner
+  names; always a real date). On that date `digest`/`pick` bring it back as open, so it can ping again.
 - Ignore / keep: `ledger.py set <id> --status handled --action kept` (identical future reminders are then filed quietly).
 
 ## 4. Close

@@ -48,6 +48,17 @@ print("   ok: Todoist CSV, calendar .ics, markdown checklist (no past due dates)
 PY
 first=${ids%% *}; $PY "$ROOT/engine/ledger.py" set $first --status tasked --action todo >/dev/null
 $PY "$ROOT/engine/ledger.py" pick --today 2026-09-28 | $PY -c "import json,sys;d=json.load(sys.stdin);assert d['total']==4,d;print('   ok: tasked items leave the list')"
+echo "3d) snooze comes back on its date; every action value the skills use is accepted"
+L="$ROOT/engine/ledger.py"; rest=${ids#* }; second=${rest%% *}; third=$(echo $ids | cut -d' ' -f3)
+$PY "$L" set $second --status snoozed --snooze-until 2026-10-01 >/dev/null
+$PY "$L" pick --today 2026-09-28 | $PY -c "import json,sys;d=json.load(sys.stdin);assert '$second' not in [o['id'] for o in d['options']] and d['total']==3,d"
+$PY "$L" set $second --status snoozed --snooze-until "next friday" >/dev/null 2>&1 && { echo "FAIL: bad snooze date accepted"; exit 1; }
+$PY "$L" pick --today 2026-10-01 --limit 5 --offset 0 | $PY -c "import json,sys;d=json.load(sys.stdin);assert '$second' in [o['id'] for o in d['options']],d"
+$PY "$L" digest --today 2026-10-01 >/dev/null
+$PY -c "import json;i=[x for x in json.load(open('$WATCHDOG_LEDGER'))['items'] if x['id']=='$second'][0];assert i['status']=='open' and 'snooze_until' not in i,i"
+$PY "$L" set $third --status open --action fixing >/dev/null || { echo "FAIL: --action fixing"; exit 1; }
+for act in cancelled disputed paid refunded downgraded kept; do $PY "$L" set $third --status handled --action $act >/dev/null || { echo "FAIL: --action $act"; exit 1; }; done
+echo "   ok: snoozed item wakes on Oct 1 and pings again; todo/fixing/cancelled/disputed/paid/refunded/downgraded/kept accepted"
 echo "4) privacy gate blocks leaks"
 cat > $T/leak.json <<J
 {"type":"wanted","merchant":"LeakCo","category":"generic","crimes":["Card ending in 4821 charged \$9.99, email jo@x.com"],"reward_per_year":120,"deny_names":["Jo Smith"],"alias":"Jo Smith's nemesis"}

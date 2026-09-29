@@ -6,8 +6,8 @@ deterministic and auditable: dedupe, savings math, the running ledger, what dese
 poster specs fed to poster/render.py.
 
   ledger.py add findings.json            merge new findings (dedupe), print what is new + actionable
-  ledger.py set <id> --status handled --action cancelled [--note "..."]   (--action kept silences repeats)
-  ledger.py digest [--today YYYY-MM-DD]  actionable open items, or the single word QUIET
+  ledger.py set <id> --status handled --action cancelled [--note "..."]   (--action kept silences repeats; todo|fixing for work-the-list)
+  ledger.py digest [--today YYYY-MM-DD]  actionable open items (wakes expired snoozes), or the single word QUIET
   ledger.py show [--all]                 human-readable ledger table
   ledger.py wanted --month YYYY-MM [--anonymous] [--out spec.json]
   ledger.py rapsheet --month YYYY-MM [--anonymous] [--out spec.json]
@@ -97,9 +97,13 @@ def urgency(f, today):
         if days <= 10: return "this_week"
     return "fyi"
 
+def snooze_over(it, today):
+    """A snoozed item comes back once its snooze_until date has arrived (no date = stays snoozed)."""
+    return it["status"] == "snoozed" and bool(it.get("snooze_until")) and it["snooze_until"][:10] <= today.isoformat()
+
 def actionable(it, today):
-    if it["status"] != "open": return False
-    if it.get("snooze_until") and it["snooze_until"] > today.isoformat(): return False
+    if it["status"] != "open" and not snooze_over(it, today): return False
+    if it.get("snooze_until") and it["snooze_until"][:10] > today.isoformat(): return False
     if it["type"] == "receipt_recurring" and not it.get("changed"): return False  # routine receipts stay quiet
     return urgency(it, today) in ("act_now", "this_week") or it["type"] in ("price_increase", "trial_ending", "refund_owed")
 
@@ -161,13 +165,21 @@ def cmd_set(a):
     it["history"].append({"at": dt.datetime.now().isoformat(timespec="minutes"), "from": it["status"], "to": a.status,
                           "action": a.action, "note": a.note})
     it["status"], it["action"] = a.status, a.action or it.get("action")
-    if a.snooze_until: it["snooze_until"] = a.snooze_until
+    if a.snooze_until:
+        try: dt.date.fromisoformat(a.snooze_until[:10])
+        except ValueError: sys.exit("--snooze-until must be a date: YYYY-MM-DD")
+        it["snooze_until"] = a.snooze_until[:10]
+    elif a.status == "open": it.pop("snooze_until", None)
     if a.unused and it["savings"]["kind"] == "review_recurring": it["savings"]["kind"] = "cancel_recurring"
     save(led); print(json.dumps(brief(it), indent=2))
 
 def cmd_digest(a):
     led = load(); today = dt.date.fromisoformat(a.today) if a.today else dt.date.today()
     for it in led["items"]:
+        if snooze_over(it, today):  # wake it up: it is open again and can ping
+            it["history"].append({"at": today.isoformat(), "from": "snoozed", "to": "open", "action": None,
+                                  "note": f"auto: snooze ended {it['snooze_until'][:10]}"})
+            it["status"] = "open"; it.pop("snooze_until", None)
         it["urgency"] = urgency({**it, "urgency": None}, today) if it["status"] == "open" else it.get("urgency")
     items = sorted([i for i in led["items"] if actionable(i, today)],
                    key=lambda i: (URGENCY_RANK[i["urgency"]], i.get("due_date") or "9999"))
