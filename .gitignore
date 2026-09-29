@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+poster/fonts/*.ttf
+out/
+*.png
+ledger.json
+watchdog-ledger.json
+private*/
+private-dryrun.md
+.env

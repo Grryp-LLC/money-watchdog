@@ -1,0 +1,9 @@
+{"_note": "FICTIONAL DEMO DATA - not from any real inbox", "findings": [
+ {"thread_id": "demo-t1", "type": "price_increase", "merchant": "Streamopolis+", "category": "streaming", "amount": 17.99, "old_amount": 15.49, "cadence": "monthly", "recurring": true, "email_date": "2026-09-02", "due_date": "2026-10-14", "evidence": "Your plan will change to $17.99/month starting Oct 14"},
+ {"thread_id": "demo-t2", "type": "duplicate_charge", "merchant": "Streamopolis+", "category": "streaming", "amount": 17.99, "email_date": "2026-09-03", "charge_date": "2026-09-03", "evidence": "two receipts, same amount, same day"},
+ {"thread_id": "demo-t3", "type": "trial_ending", "merchant": "IronHorse Fitness", "category": "fitness", "amount": 39.99, "cadence": "monthly", "recurring": true, "email_date": "2026-09-25", "due_date": "2026-10-02", "evidence": "Your free trial ends Oct 2. You'll be billed $39.99/mo"},
+ {"thread_id": "demo-t4", "type": "bill_due", "merchant": "Prairie Power Co.", "category": "utility", "amount": 112.40, "late_fee": 25, "email_date": "2026-09-26", "due_date": "2026-10-05", "evidence": "A $25 late fee applies after Oct 5"},
+ {"thread_id": "demo-t5", "type": "receipt_recurring", "merchant": "TuneStable", "category": "music", "amount": 19.99, "cadence": "monthly", "recurring": true, "email_date": "2026-09-10", "charge_date": "2026-09-10"},
+ {"thread_id": "demo-t6", "type": "refund_owed", "merchant": "Boxcar Meals", "category": "food", "amount": 59.94, "email_date": "2026-09-18", "evidence": "we'll refund your skipped box"},
+ {"thread_id": "demo-t7", "type": "trial_ending", "merchant": "IronHorse Fitness", "category": "fitness", "amount": 39.99, "cadence": "monthly", "recurring": true, "email_date": "2026-09-28", "due_date": "2026-10-02", "evidence": "Reminder: trial ends in 4 days"}
+]}
