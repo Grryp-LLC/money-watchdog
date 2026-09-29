@@ -81,14 +81,14 @@
 
 ## Install the kit (what the bot runs; also works on any Linux/macOS box)
 ```bash
-KIT=https://codeload.github.com/Grryp-LLC/money-watchdog/tar.gz/885f7260c303012e06f728092b65dc2e76cb06cb
+KIT=https://codeload.github.com/Grryp-LLC/money-watchdog/tar.gz/8e9b43663d705addc94b19fe1b7288ed9090f5c0
 mkdir -p ~/money-watchdog && curl -fsSL "$KIT" | tar xz --strip-components=1 -C ~/money-watchdog && bash ~/money-watchdog/install.sh
 ```
 `install.sh` fetches the fonts from google/fonts at a pinned commit and checks their SHA-256, creates a Python venv with
 Playwright and Pillow, uses the system Chrome/Chromium (or installs Playwright Chromium), and runs the self-test. Re-running
 it is safe, and it never touches `ledger.json`.
 
-The URL is pinned to commit `885f726` (kit v1.1: keep-silencing, honest per-year vs one-time bounties, `pick`/`export` for work-the-list).
+The URL is pinned to commit `8e9b436` (kit v1.1: keep-silencing, honest per-year vs one-time bounties, `pick`/`export` for work-the-list, snoozes that wake on their date).
 The engine and poster code at that commit never change, so the bot always installs exactly what was reviewed.
 
 ```bash

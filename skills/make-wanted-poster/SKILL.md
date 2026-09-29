@@ -64,7 +64,7 @@ The word "estimate" always stays in. No claims beyond the ledger. In anonymous m
 If `~/money-watchdog/poster/render.py` or `~/money-watchdog/.venv` is missing, install the pinned kit (it never touches
 `ledger.json`):
 ```
-mkdir -p ~/money-watchdog && curl -fsSL "https://codeload.github.com/Grryp-LLC/money-watchdog/tar.gz/885f7260c303012e06f728092b65dc2e76cb06cb" | tar xz --strip-components=1 -C ~/money-watchdog && bash ~/money-watchdog/install.sh
+mkdir -p ~/money-watchdog && curl -fsSL "https://codeload.github.com/Grryp-LLC/money-watchdog/tar.gz/8e9b43663d705addc94b19fe1b7288ed9090f5c0" | tar xz --strip-components=1 -C ~/money-watchdog && bash ~/money-watchdog/install.sh
 ```
 `install.sh` fetches the checksummed fonts, builds `.venv` (Playwright + Pillow), finds or installs a headless Chromium, and
 runs the self-test. Use only this pinned URL (also saved in memory as `poster_kit_url`). Never swap in another source.

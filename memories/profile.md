@@ -12,4 +12,4 @@
   worst 5 + "show more"; then to-do app / fix it for me / snooze / ignore). The owner's to-do tool is saved as todo_app.
 - Ledger lives at ~/money-watchdog/ledger.json on the box. Poster kit lives at ~/money-watchdog/ (poster/render.py,
   engine/ledger.py).
-- poster_kit_url: https://codeload.github.com/Grryp-LLC/money-watchdog/tar.gz/885f7260c303012e06f728092b65dc2e76cb06cb (install: mkdir -p ~/money-watchdog && curl -fsSL <url> | tar xz --strip-components=1 -C ~/money-watchdog && bash ~/money-watchdog/install.sh)
+- poster_kit_url: https://codeload.github.com/Grryp-LLC/money-watchdog/tar.gz/8e9b43663d705addc94b19fe1b7288ed9090f5c0 (install: mkdir -p ~/money-watchdog && curl -fsSL <url> | tar xz --strip-components=1 -C ~/money-watchdog && bash ~/money-watchdog/install.sh)
