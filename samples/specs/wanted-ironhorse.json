@@ -1,0 +1,17 @@
+{
+  "type": "wanted",
+  "sample": true,
+  "slug": "wanted-ironhorse",
+  "merchant": "IronHorse Fitness",
+  "category": "fitness",
+  "alias": "The Trial Trap",
+  "crimes": [
+    "Free trial ends Oct 2, then $39.99/mo",
+    "Buried a $49 annual 'maintenance fee' in the fine print",
+    "Cancellation only by certified mail"
+  ],
+  "reward_per_year": 528.88,
+  "reward_basis": "$40/mo x 12 + $49 fee, if cancelled in trial",
+  "period": "Sep 2026",
+  "case": "12"
+}

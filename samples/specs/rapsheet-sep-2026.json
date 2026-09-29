@@ -1,0 +1,58 @@
+{
+  "type": "rapsheet",
+  "sample": true,
+  "slug": "rapsheet-sep-2026",
+  "period": "September 2026",
+  "spotted": 9,
+  "rows": [
+    {
+      "merchant": "IronHorse Fitness",
+      "category": "fitness",
+      "crime": "Trial converts Oct 2 at $39.99/mo + $49 fee",
+      "bounty_per_year": 528.88,
+      "status": "at_large"
+    },
+    {
+      "merchant": "Streamopolis+",
+      "category": "streaming",
+      "crime": "Price hike $15.49 to $17.99/mo, double-billed",
+      "bounty_per_year": 215.88,
+      "status": "at_large"
+    },
+    {
+      "merchant": "Gazette Digital",
+      "category": "news",
+      "crime": "Intro rate ended, now $24/mo",
+      "bounty_per_year": 288,
+      "status": "caught"
+    },
+    {
+      "merchant": "CloudCorral Pro",
+      "category": "cloud",
+      "crime": "Duplicate $9.99 charge, hike on Nov 1",
+      "bounty_per_year": 33.99,
+      "status": "watching"
+    },
+    {
+      "merchant": "Boxcar Meals",
+      "category": "food",
+      "crime": "Skipped week still charged $59.94",
+      "status": "caught",
+      "bounty_once": 59.94
+    },
+    {
+      "merchant": "Prairie Power Co.",
+      "category": "utility",
+      "crime": "Bill due Oct 5, $25 late fee if missed",
+      "bounty_per_year": 25,
+      "status": "pardoned"
+    },
+    {
+      "merchant": "TuneStable",
+      "category": "music",
+      "crime": "Family plan renews at $19.99/mo",
+      "bounty_per_year": 0,
+      "status": "pardoned"
+    }
+  ]
+}

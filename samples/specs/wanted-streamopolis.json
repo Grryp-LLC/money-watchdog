@@ -1,0 +1,13 @@
+{
+  "type": "wanted", "sample": true, "slug": "wanted-streamopolis",
+  "merchant": "Streamopolis+", "category": "streaming",
+  "alias": "The Silent Renewal",
+  "crimes": [
+    "Raised the price from $15.49 to $17.99/mo in one quiet email",
+    "Billed twice on Sep 3 (duplicate charge)",
+    "Auto-renews on the 14th with no reminder"
+  ],
+  "reward_per_year": 215.88,
+  "reward_basis": "$18/mo x 12 if cancelled",
+  "period": "Sep 2026", "case": "07"
+}
