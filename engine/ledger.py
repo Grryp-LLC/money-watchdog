@@ -6,12 +6,14 @@ deterministic and auditable: dedupe, savings math, the running ledger, what dese
 poster specs fed to poster/render.py.
 
   ledger.py add findings.json            merge new findings (dedupe), print what is new + actionable
-  ledger.py set <id> --status handled --action cancelled [--note "..."]
+  ledger.py set <id> --status handled --action cancelled [--note "..."]   (--action kept silences repeats)
   ledger.py digest [--today YYYY-MM-DD]  actionable open items, or the single word QUIET
   ledger.py show [--all]                 human-readable ledger table
   ledger.py wanted --month YYYY-MM [--anonymous] [--out spec.json]
   ledger.py rapsheet --month YYYY-MM [--anonymous] [--out spec.json]
   ledger.py board --week-of YYYY-MM-DD [--anonymous] [--out spec.json]
+  ledger.py pick [--limit 5] [--offset 0] [--today YYYY-MM-DD]   widget-ready options for work-the-list
+  ledger.py export <id>... --format csv|ics|md --out FILE         to-do file (Todoist CSV / calendar .ics / checklist)
 
 Ledger path: $WATCHDOG_LEDGER or ~/money-watchdog/ledger.json. The ledger is private (it holds thread ids and
 short evidence quotes); poster specs built from it contain only merchant, category, rounded amounts,
@@ -126,10 +128,25 @@ def cmd_add(a):
         it.pop("thread_id", None)
         it["savings"] = score(it)
         it["urgency"] = urgency(it, today)
+        prev = kept_before(led, it)
+        if prev:  # owner already said "keep it" for this merchant/type/amount: record it, stay quiet
+            it.update(status="dismissed", action="kept")
+            it["history"].append({"at": today.isoformat(), "from": "open", "to": "dismissed", "action": "kept",
+                                  "note": f"auto: owner kept this before ({prev['id']})"})
         led["items"].append(it); by_id[k] = it; new.append(it)
     save(led)
     print(json.dumps({"new": len(new), "repeat_sightings": len(updated),
                       "new_actionable": [brief(i) for i in new if actionable(i, today)]}, indent=2))
+
+def kept_before(led, it):
+    """Owner said "keep X" earlier for the same merchant + type + amount -> next month's reminder is not news.
+    A different amount (e.g. a price change) is news again, so it still alerts."""
+    for x in led["items"]:
+        if (x.get("action") == "kept" and x["type"] == it["type"]
+                and norm_merchant(x["merchant"]) == norm_merchant(it["merchant"])
+                and abs(float(x.get("amount") or 0) - float(it.get("amount") or 0)) < 0.005):
+            return x
+    return None
 
 def brief(i):
     s = i["savings"]
@@ -158,6 +175,80 @@ def cmd_digest(a):
     if not items:
         print("QUIET"); return
     print(json.dumps([brief(i) for i in items], indent=2))
+
+# ------------------------------------------------------------------ work-the-list helpers
+WHAT = {"declined": "payment failed", "upcoming_charge": "charge coming", "renewal": "auto-renews",
+        "trial_ending": "trial converts", "price_increase": "price hike", "bill_due": "bill due", "past_due": "past due",
+        "refund_owed": "refund owed", "duplicate_charge": "charged twice", "fraud_alert": "suspicious charge",
+        "receipt_recurring": "recurring charge"}
+NEXT = {"declined": "Update the card in the merchant's billing page", "past_due": "Pay or dispute before more fees",
+        "bill_due": "Pay before the due date", "trial_ending": "Cancel before the trial converts, or keep it",
+        "renewal": "Cancel before it renews, or keep it", "upcoming_charge": "Cancel or confirm before the charge",
+        "price_increase": "Cancel, downgrade, or ask to keep the old price", "refund_owed": "Check the refund arrived",
+        "duplicate_charge": "Ask the merchant to refund the duplicate", "fraud_alert": "Call the bank using the number on your card",
+        "receipt_recurring": "Decide whether you still use it"}
+
+def label(i):
+    """<= 60 chars: merchant · amount · what's wrong (+ date). Used as a widget option label."""
+    cad = UNIT.get((i.get("cadence") or "").lower(), "")
+    amt = f"{m(i['amount'])}{('/' + cad) if cad else ''}" if i.get("amount") else "no amount"
+    d = i.get("due_date") or i.get("charge_date") or ""
+    when = " " + dt.date.fromisoformat(d[:10]).strftime("%b %-d") if d else ""
+    return f"{i['merchant'][:22]} · {amt} · {WHAT[i['type']]}{when}"[:60]
+
+def open_ranked(led, today):
+    items = [i for i in led["items"] if actionable(i, today)]
+    return sorted(items, key=lambda i: (URGENCY_RANK[urgency({**i, "urgency": None}, today)], -bounty(i), i.get("due_date") or "9999"))
+
+def cmd_pick(a):
+    led = load(); today = dt.date.fromisoformat(a.today) if a.today else dt.date.today()
+    items = open_ranked(led, today)
+    page = items[a.offset:a.offset + a.limit]
+    more = len(items) - a.offset - len(page)
+    opts = [{"id": i["id"], "label": label(i)} for i in page]
+    if more > 0:
+        opts.append({"id": "__more__", "label": f"Show {min(more, a.limit)} more ({more} left)"})
+    print(json.dumps({"total": len(items), "offset": a.offset, "options": opts}, indent=2))
+
+def ics_escape(t):
+    return t.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
+
+def cmd_export(a):
+    led = load(); by = {i["id"]: i for i in led["items"]}
+    rows = [by[x] for x in a.ids if x in by]
+    if not rows: sys.exit("no matching ledger ids")
+    today = dt.date.fromisoformat(a.today) if a.today else dt.date.today()
+    def due(i):  # the day to act: the day before a renewal/trial/charge, the due date for bills, otherwise today
+        d = i.get("due_date")
+        if not d: return today
+        early = 1 if i["type"] in ("trial_ending", "renewal", "upcoming_charge", "price_increase") else 0
+        return max(today, dt.date.fromisoformat(d[:10]) - dt.timedelta(days=early))
+    def title(i):
+        return f"{i['merchant']}: {NEXT[i['type']].lower()}"
+    def note(i):
+        return f"{label(i)}. Est. {brief(i)['estimate']} ({i['savings']['basis'] or 'no $ claimed'}). From Money Watchdog."
+    if a.format == "csv":  # Todoist import format; also opens fine in Sheets/Excel for Google Tasks / TickTick / Notion
+        import csv, io
+        buf = io.StringIO(); w = csv.writer(buf)
+        w.writerow(["TYPE", "CONTENT", "DESCRIPTION", "PRIORITY", "INDENT", "AUTHOR", "RESPONSIBLE", "DATE", "DATE_LANG", "TIMEZONE"])
+        for i in rows:
+            pr = 1 if urgency({**i, "urgency": None}, today) == "act_now" else 2
+            w.writerow(["task", title(i), note(i), pr, 1, "", "", due(i).isoformat(), "en", ""])
+        txt = buf.getvalue()
+    elif a.format == "ics":  # all-day calendar reminders with an alarm (Apple/Google/Outlook calendars)
+        stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        ev = []
+        for i in rows:
+            d = due(i)
+            ev += ["BEGIN:VEVENT", f"UID:{i['id']}-{d.isoformat()}@money-watchdog", f"DTSTAMP:{stamp}",
+                   f"DTSTART;VALUE=DATE:{d.strftime('%Y%m%d')}", f"DTEND;VALUE=DATE:{(d + dt.timedelta(days=1)).strftime('%Y%m%d')}",
+                   f"SUMMARY:{ics_escape(title(i))}", f"DESCRIPTION:{ics_escape(note(i))}",
+                   "BEGIN:VALARM", "ACTION:DISPLAY", "TRIGGER:-PT15H", f"DESCRIPTION:{ics_escape(title(i))}", "END:VALARM",
+                   "END:VEVENT"]
+        txt = "\r\n".join(["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Money Watchdog//EN", *ev, "END:VCALENDAR"]) + "\r\n"
+    else:
+        txt = "# Money Watchdog to-do\n\n" + "".join(f"- [ ] **{title(i)}** (by {due(i).strftime('%b %-d')}): {note(i)}\n" for i in rows)
+    Path(a.out).write_text(txt); print(a.out)
 
 def cmd_show(a):
     led = load()
@@ -206,14 +297,15 @@ def cmd_wanted(a):
     lead = worst[0]
     spec = {"type": "wanted", "merchant": lead["merchant"], "category": lead.get("category", "generic"),
             "alias": ALIAS.get(lead["type"], "The Outlaw"), "crimes": [crime_text(i) for i in worst][:3],
-            "reward_per_year": round(total, 2),
+            "reward_per_year": round(sum(i["savings"]["per_year"] for i in worst if i["savings"]["kind"] == "cancel_recurring"), 2),
+            "reward_once": round(sum(i["savings"]["one_time"] for i in worst), 2),
             "reward_basis": " + ".join(i["savings"]["basis"] for i in worst if bounty(i))[:120],
             "period": dt.date.fromisoformat(a.month + "-01").strftime("%b %Y"), "anonymous": a.anonymous,
             "slug": f"wanted-{a.month}"}
     emit(spec, a.out)
 
 def rows_for(items):
-    st = {"open": "at_large", "handled": "caught", "dismissed": "pardoned", "snoozed": "watching"}
+    st = {"open": "at_large", "handled": "caught", "dismissed": "pardoned", "snoozed": "watching", "tasked": "watching"}
     rows = []
     for i in sorted(items, key=lambda i: -bounty(i)):
         s = i["savings"]
@@ -235,7 +327,7 @@ def cmd_rapsheet(a):
 
 def cmd_board(a):
     led = load(); start = dt.date.fromisoformat(a.week_of); end = start + dt.timedelta(days=7)
-    items = [i for i in led["items"] if i["status"] in ("open", "snoozed") and
+    items = [i for i in led["items"] if i["status"] in ("open", "snoozed", "tasked") and
              (start.isoformat() <= i["first_seen"] < end.isoformat() or i["status"] == "open")]
     spec = {"type": "bountyboard", "period": start.strftime("%b %-d, %Y"), "rows": rows_for(items),
             "anonymous": a.anonymous, "slug": f"bountyboard-{a.week_of}"}
@@ -251,14 +343,18 @@ def main():
     sp = ap.add_subparsers(dest="cmd", required=True)
     p = sp.add_parser("add"); p.add_argument("findings"); p.add_argument("--today"); p.set_defaults(fn=cmd_add)
     p = sp.add_parser("set"); p.add_argument("id"); p.add_argument("--status", required=True,
-        choices=["open", "handled", "dismissed", "snoozed"]); p.add_argument("--action",
-        choices=["cancelled", "disputed", "paid", "refunded", "downgraded", "kept", None]); p.add_argument("--note")
+        choices=["open", "handled", "dismissed", "snoozed", "tasked"]); p.add_argument("--action",
+        choices=["cancelled", "disputed", "paid", "refunded", "downgraded", "kept", "todo", "fixing", None]); p.add_argument("--note")
     p.add_argument("--snooze-until"); p.add_argument("--unused", action="store_true"); p.set_defaults(fn=cmd_set)
     p = sp.add_parser("digest"); p.add_argument("--today"); p.set_defaults(fn=cmd_digest)
     p = sp.add_parser("show"); p.add_argument("--all", action="store_true"); p.set_defaults(fn=cmd_show)
     for name, fn in (("wanted", cmd_wanted), ("rapsheet", cmd_rapsheet)):
         p = sp.add_parser(name); p.add_argument("--month", required=True); p.add_argument("--anonymous", action="store_true")
         p.add_argument("--out"); p.set_defaults(fn=fn)
+    p = sp.add_parser("pick"); p.add_argument("--limit", type=int, default=5); p.add_argument("--offset", type=int, default=0)
+    p.add_argument("--today"); p.set_defaults(fn=cmd_pick)
+    p = sp.add_parser("export"); p.add_argument("ids", nargs="+"); p.add_argument("--format", choices=["csv", "ics", "md"], default="md")
+    p.add_argument("--out", required=True); p.add_argument("--today"); p.set_defaults(fn=cmd_export)
     p = sp.add_parser("board"); p.add_argument("--week-of", required=True); p.add_argument("--anonymous", action="store_true")
     p.add_argument("--out"); p.set_defaults(fn=cmd_board)
     a = ap.parse_args(); a.fn(a)
