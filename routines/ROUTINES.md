@@ -8,7 +8,7 @@ Why every day (7 days a week) for the daily scan: money deadlines (renewals, tri
 too, and the routine is silent unless something needs action. The weekly and monthly ones sit in normal morning hours.
 
 ## 1. daily-money-scan
-- **Schedule:** `7 8 * * *` (8:07 AM owner-local, every day; the getting-started skill adjusts it to their check-in time)
+- **Schedule:** `7 8 * * *` (8:07 AM owner-local, every day; the money-watchdog-getting-started skill adjusts it to their check-in time)
 - **Prompt:**
   > Run the scan-inbox skill for the last 2 days of the owner's Gmail, read-only. Merge findings into the ledger
   > (dedupe), re-score with score-savings, and auto-resolve declines that have a later receipt. If anything is

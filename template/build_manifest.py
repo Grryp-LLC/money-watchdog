@@ -8,7 +8,7 @@ prof = (R / "bot-profile.md").read_text()
 system_prompt = re.search(r"## System prompt / persona\n\n```\n(.*?)\n```", prof, re.S).group(1)
 short = re.search(r"\*\*Short description\*\*[^|]*\|\s*(.*?)\s*\|\n", prof).group(1)
 skills = []
-for d in ["getting-started", "scan-inbox", "score-savings", "make-wanted-poster", "monthly-rap-sheet", "draft-cancellation"]:
+for d in ["money-watchdog-getting-started", "scan-inbox", "score-savings", "make-wanted-poster", "monthly-rap-sheet", "draft-cancellation"]:
     t = (R / "skills" / d / "SKILL.md").read_text()
     desc = " ".join(re.search(r"description: >-\n(.*?)\n---", t, re.S).group(1).split())
     skills.append({"name": d, "description": desc, "job": strip(t)})
@@ -29,9 +29,9 @@ manifest = {
     "memories": {"profile": mem, "log": [" ".join((R / "memories" / "log.md").read_text().lstrip("- ").split())]},
     "skills": skills,
     "routines": routines,
-    "routinesNote": "Created by getting-started in the new owner's timezone; specs in routines/ROUTINES.md.",
+    "routinesNote": "Created by money-watchdog-getting-started in the new owner's timezone; specs in routines/ROUTINES.md.",
     "plugins": ["Gmail (marketplace connector; read-only use: thread search + thread read)"],
-    "gettingStarted": "getting-started",
+    "gettingStarted": "money-watchdog-getting-started",
 }
 (R / "template" / "template-manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
 print("wrote", R / "template" / "template-manifest.json", len(json.dumps(manifest)), "bytes")
