@@ -7,8 +7,9 @@ description: >-
 ---
 # Draft a cancellation or dispute (owner sends it)
 
-**Hard rule:** you produce text in chat, or a file on your box. You never create a Gmail draft, never send, and
-never submit a merchant's web form. The owner copies it and sends it.
+**Hard rule:** you produce text in chat, or a file on your box. You never create a Gmail draft and never send. The
+owner copies it and sends it. Merchant web forms are only touched in work-the-list "Fix it for me", with the owner
+present and an explicit yes for that item.
 
 ## Steps
 1. Find the ledger item(s) for the merchant. Re-read the source email (read-only) for exact facts: the plan name,

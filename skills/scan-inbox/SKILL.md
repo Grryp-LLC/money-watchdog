@@ -22,20 +22,26 @@ through results (≤ 50 per page) until you run out or hit ~150 threads per quer
 
 | # | Category | Query |
 |---|---|---|
-| Q1 | declined / failed | `(declined OR "payment failed" OR "payment was unsuccessful" OR "unable to process" OR "couldn't process" OR "update your payment" OR "payment method" OR "card expired")` |
+| Q1 | declined / failed | `(declined OR "payment failed" OR "payment was unsuccessful" OR "unable to process" OR "couldn't process" OR "update your payment" OR "couldn't charge" OR "could not charge" OR "unable to charge" OR "card expired")` |
 | Q2 | past due | `("past due" OR overdue OR "late fee" OR "final notice" OR "service interruption" OR "suspension" OR "collections")` |
-| Q3 | renewals / upcoming | `(renew OR renewal OR "auto-renew" OR "will be charged" OR "upcoming payment" OR "next billing" OR "upcoming charge" OR "scheduled payment")` |
+| Q3 | renewals / upcoming | `(renew OR renewal OR "auto-renew" OR "will be charged" OR "upcoming payment" OR "next billing" OR "upcoming charge" OR "scheduled payment" OR "has been renewed" OR "subscription renewed")` |
 | Q4 | trials | `("trial ends" OR "trial ending" OR "trial will end" OR "trial expires" OR "end of your trial" OR "free trial")` |
-| Q5 | price increases | `("price increase" OR "price change" OR "new price" OR "prices are changing" OR "rate increase" OR "going up" OR "updated pricing")` |
+| Q5 | price increases | `("price increase" OR "price change" OR "new price" OR "prices are changing" OR "rate increase" OR "price is changing" OR "new rate" OR "updated pricing")` |
 | Q6 | bills due | `("bill is ready" OR "payment due" OR "amount due" OR "balance due" OR "due date" OR "invoice") -("statement balance is $0")` |
 | Q7 | refunds / duplicates | `(refund OR "charged twice" OR "duplicate charge" OR "double charged" OR chargeback OR "credit issued" OR "return request")` |
-| Q8 | fraud / bank alerts | `("suspicious" OR "fraud" OR "unusual activity" OR "did you make this" OR "confirm your recent purchase" OR "verify this transaction")` |
-| Q9 | recurring receipts | `(receipt OR invoice OR "payment received" OR "thanks for your payment") (subscription OR membership OR plan OR monthly OR annual OR renewal)` |
+| Q8 | fraud / bank alerts | `("suspicious activity" OR "suspicious transaction" OR "fraud alert" OR "unusual activity" OR "did you make this" OR "confirm your recent purchase" OR "verify this transaction")` |
+| Q9 | recurring receipts | `(receipt OR invoice OR "payment received" OR "thanks for your payment") (subscription OR membership OR plan OR monthly OR annual OR renewal OR "App Store" OR "Google Play")` |
 
 Always drop these (seller-side and noise): "You made a sale", shipping and delivery notices, marketplace order
 notifications *to a seller*, loyalty and points promos, pre-approved credit offers, newsletters, new-login and
 password notices (unless the email mentions a charge), and Zelle or payment *requests from people* (report only if
 the owner asks).
+
+**Money-signal gate (cuts false positives).** Keep a thread only if it is addressed to the owner *as a customer* of that
+merchant and has at least one of: an amount, a due / charge / renewal date, or an explicit failed or declined status.
+Drop: marketing blasts ("prices are going up, lock in now!", "% off", "deal"), news articles or newsletters *about*
+price hikes or fraud, bank "security tips" mail with no transaction, and receipts for one-off purchases that don't
+recur. When unsure, leave it out: a missed FYI costs less than a false alarm.
 
 ## 3. Read and classify
 Triage from subject and snippet first. Read the full body (plain-text format) only when the snippet lacks the amount,
@@ -75,6 +81,9 @@ Parsing rules:
 - Ledger file: `~/money-watchdog/ledger.json` on your box. If the kit is installed (`~/money-watchdog/engine/ledger.py`),
   write the findings to a temp JSON file and run `ledger.py add <file>`, then `ledger.py digest`. Without the kit,
   maintain the same JSON schema by hand (see score-savings for the math) and never drop history.
+- "Keep X" from the owner = `ledger.py set <id> --status handled --action kept`. Later reminders with the same
+  merchant, type, and amount are then filed quietly (status dismissed, note "auto: owner kept this before"). A new
+  amount (price change) alerts again.
 - Also keep a one-line log memory per scan: date, number of threads scanned, number of new findings. No merchant
   details in memory.
 
@@ -91,6 +100,10 @@ Otherwise, group by urgency, at most 6 lines, each one: what, who, amount, deadl
 • CloudCorral says your payment failed (no amount in the email). Update the card in billing before service is paused.
 ⏰ This week
 • IronHorse Fitness trial converts Oct 2 at $39.99/mo. Cancel before then if you don't want it (est. ~$480/yr).
-Reply "draft cancellation for IronHorse", "keep IronHorse", or "snooze".
 ```
+(Then the work-the-list widgets follow, so the report itself needs no "reply with…" line.)
 Never include card digits, account numbers, or links in the ping. The owner can open their mail.
+
+## 6. Action step
+Right after an actionable report, run **work-the-list**: a multi-select widget of the open items (worst 5 + "show
+more"), then a second widget asking how to handle the ticked ones (to-do app, fix it for me, snooze, ignore).

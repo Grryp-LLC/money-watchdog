@@ -14,7 +14,7 @@ description: >-
    (`/yr` for recurring, `once` for one-time, `—` if no amount), and status stamp:
    - **AT LARGE**: still open
    - **CAUGHT**: owner handled it (cancelled / refunded / disputed / downgraded / paid before the fee)
-   - **WATCHING**: snoozed
+   - **WATCHING**: snoozed, or in the owner's to-do app (tasked)
    - **PARDONED**: owner chose to keep it, or dismissed it
 3. Stat boxes: *Outlaws spotted* (count of findings), *Still at large* (sum of open recurring bounties, est. /yr),
    *Bounties collected* (sum of CAUGHT bounties, est.). The fine print "Bounties are estimates from amounts in the

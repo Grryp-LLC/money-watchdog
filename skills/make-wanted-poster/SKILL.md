@@ -20,8 +20,11 @@ You make the image and the caption. **You never post it.** The owner shares it t
 ```json
 {"type": "wanted", "merchant": "Streamopolis+", "category": "streaming", "alias": "The Price Creep",
  "crimes": ["Raised the price from $15 to $18/mo", "Charged $18 twice on Sep 3", "Auto-renews Oct 14 at $18/mo"],
- "reward_per_year": 215.88, "reward_basis": "$18/mo x 12 if cancelled", "period": "Sep 2026", "anonymous": false}
+ "reward_per_year": 215.88, "reward_once": 18, "reward_basis": "$18/mo x 12 if cancelled", "period": "Sep 2026", "anonymous": false}
 ```
+- `reward_per_year` = recurring money only (cancel or hike values). `reward_once` = one-time money (duplicate refund,
+  refund owed, avoided fee). The poster headline shows `/YR` only for recurring money and adds "+ $X ONE-TIME" in the
+  fine print; a refund-only poster reads "REWARD $60 ONCE". One-time money is never annualized.
 - At most 3 crimes, each ≤ 60 characters, written from the email facts (type + rounded amount + date). No quotes from
   the email, no order numbers.
 - Aliases by main crime: price_increase "The Price Creep", trial_ending "The Trial Trap", duplicate_charge "The Double
@@ -53,15 +56,15 @@ caption.
 Add `--sample` (stamps "SAMPLE · DEMO DATA") whenever the data is fictional or a demo.
 
 ## 5. Caption (suggested, ≤ 200 characters)
-Template: `My inbox sheriff just slapped a WANTED poster on {merchant}. Charge: {first crime}. Bounty: ~${reward}/yr in
-potential savings (estimate). Posse up. #MoneyWatchdog`
+Template (the kit writes it for you): `My inbox sheriff just slapped a WANTED poster on {merchant}. Crime: {first crime}.
+Bounty: ~{$X/yr | $X/yr + $Y one-time | $Y one-time} in potential savings (estimate). Posse up. #MoneyWatchdog`
 The word "estimate" always stays in. No claims beyond the ledger. In anonymous mode, use the category alias.
 
 ## Kit (one-time setup on your box)
 If `~/money-watchdog/poster/render.py` or `~/money-watchdog/.venv` is missing, install the pinned kit (it never touches
 `ledger.json`):
 ```
-mkdir -p ~/money-watchdog && curl -fsSL "https://codeload.github.com/Grryp-LLC/money-watchdog/tar.gz/e8a785bac75460b49c0acabd691e54ae79f72408" | tar xz --strip-components=1 -C ~/money-watchdog && bash ~/money-watchdog/install.sh
+mkdir -p ~/money-watchdog && curl -fsSL "https://codeload.github.com/Grryp-LLC/money-watchdog/tar.gz/885f7260c303012e06f728092b65dc2e76cb06cb" | tar xz --strip-components=1 -C ~/money-watchdog && bash ~/money-watchdog/install.sh
 ```
 `install.sh` fetches the checksummed fonts, builds `.venv` (Playwright + Pillow), finds or installs a headless Chromium, and
 runs the self-test. Use only this pinned URL (also saved in memory as `poster_kit_url`). Never swap in another source.

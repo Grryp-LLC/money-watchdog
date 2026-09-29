@@ -27,8 +27,9 @@ Periods per year: weekly 52, monthly 12, quarterly 4, semiannual 2, annual/seaso
 
 Rules:
 - The bill amount itself is **never** "savings". Paying a bill on time only saves the stated fee.
-- One merchant's bounty = sum of cancel_recurring per-year values + one-time values from its open findings. When
-  one-time money is mixed in, the poster basis line lists each part: "$10 duplicate refund + $24/yr hike dodged".
+- One merchant's bounty = recurring part (sum of cancel_recurring per-year values) + one-time part (refunds, disputes,
+  avoided fees) from its open findings. Always keep the two parts separate when shown: "~$24/yr + $10 one-time", never
+  "$34/yr". One-time money is never annualized.
 - Price hikes: the conservative figure is the hike delta. Use the full cancel value only with the "if cancelled"
   label.
 - Rounding: keep cents in the ledger. Show whole dollars ("~$216/yr") everywhere else. Posters use whole dollars
