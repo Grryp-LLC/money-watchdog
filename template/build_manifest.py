@@ -8,7 +8,7 @@ prof = (R / "bot-profile.md").read_text()
 system_prompt = re.search(r"## System prompt / persona\n\n```\n(.*?)\n```", prof, re.S).group(1)
 short = re.search(r"\*\*Short description\*\*[^|]*\|\s*(.*?)\s*\|\n", prof).group(1)
 skills = []
-for d in ["money-watchdog-getting-started", "scan-inbox", "score-savings", "make-wanted-poster", "monthly-rap-sheet", "draft-cancellation"]:
+for d in ["money-watchdog-getting-started", "scan-inbox", "score-savings", "make-wanted-poster", "monthly-rap-sheet", "draft-cancellation", "work-the-list"]:
     t = (R / "skills" / d / "SKILL.md").read_text()
     desc = " ".join(re.search(r"description: >-\n(.*?)\n---", t, re.S).group(1).split())
     skills.append({"name": d, "description": desc, "job": strip(t)})

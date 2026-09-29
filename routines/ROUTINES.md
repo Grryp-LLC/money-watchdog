@@ -14,7 +14,7 @@ too, and the routine is silent unless something needs action. The weekly and mon
   > (dedupe), re-score with score-savings, and auto-resolve declines that have a later receipt. If anything is
   > actionable (act now or due within 10 days, or a new price hike, trial conversion, or refund owed), message the owner
   > with at most 6 short lines grouped by urgency, each with amount, deadline, estimated savings (labeled estimate),
-  > and next step. If nothing is actionable, do not message the owner at all. Never send, reply, label, delete, draft, or
+  > and next step, then run work-the-list (pick widget of the open items, then how to handle them). If nothing is actionable, do not message the owner at all. Never send, reply, label, delete, draft, or
   > unsubscribe anything in Gmail. If Gmail auth fails on two runs in a row, pause this routine and tell the owner what to
   > reconnect.
 

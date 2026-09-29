@@ -11,8 +11,9 @@
     "Price rising 20% on Nov 1 ($9.99 to $11.99/mo)",
     "Renews Oct 12 with no reminder email"
   ],
-  "reward_per_year": 33.99,
-  "reward_basis": "$10 duplicate refund + $24/yr hike dodged by downgrading",
+  "reward_per_year": 24,
+  "reward_once": 9.99,
+  "reward_basis": "hike dodged by downgrading",
   "period": "Sep 2026",
   "case": "03"
 }
