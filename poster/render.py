@@ -183,13 +183,22 @@ def prep_wanted(d, anonymous, deny):
         "merchant_disp": privacy.display_merchant(d["merchant"], cat, anon, deny),
         "alias": privacy.scrub(d.get("alias", ""), deny),
         "crimes": [privacy.scrub(c, deny) for c in d.get("crimes", [])][:4],
-        "reward": float(d["reward_per_year"]),
+        "reward_per_year": float(d.get("reward_per_year") or 0),
+        "reward_once": float(d.get("reward_once") or 0),
         "basis": privacy.scrub(d.get("reward_basis", ""), deny),
         "period": privacy.scrub(d.get("period", ""), deny),
         "category": cat, "logo": d.get("logo"), "anon": anon, "sample": d.get("sample", False),
         "case": privacy.scrub(d.get("case", ""), deny),
     }
     out["initial"] = out["case"] or ("?" if anon else out["merchant"][:1])
+    # Honest headline: recurring money is "/YR"; one-time money is never annualized.
+    per, once = out["reward_per_year"], out["reward_once"]
+    if per > 0:
+        out.update(reward=per, per_label="/YR", plus=f"+ {money(once)} ONE-TIME" if once > 0 else "")
+    else:
+        out.update(reward=once, per_label="ONCE", plus="")
+    if out["reward"] <= 0:
+        sys.exit("no dollar bounty in the spec; refusing to render a WANTED poster (never invent a bounty)")
     return out
 
 def lint_or_die(texts, deny):
@@ -221,7 +230,7 @@ def wanted_html(p, size, seed):
 ol{list-style:none;text-align:left;font-family:Elite;font-size:27px;line-height:1.28;margin:8px 6px 8px;flex:1;display:flex;flex-direction:column;justify-content:center}
 ol li{margin:4px 0;padding-left:128px;text-indent:-128px}
 .cn{display:inline-block;width:128px;text-indent:0;font-size:22px;letter-spacing:1px}
-.rewardbox{border-top:3px double;padding-top:6px;display:flex;align-items:center;justify-content:center;gap:24px}
+.rewardbox{border-top:3px double;padding-top:6px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:24px}
 .rw{font-family:Rye;font-size:62px;letter-spacing:3px}
 .amt{font-family:Rye;font-size:150px;color:%(RED)s;line-height:1}
 .per{font-family:Rye;font-size:48px;color:%(RED)s}
@@ -239,15 +248,15 @@ ol li{margin:4px 0;padding-left:128px;text-indent:-128px}
   {alias}
   <div class="charge">— CHARGED WITH —</div>
   <ol>{crimes}</ol>
-  <div class="rewardbox"><span class="rw">REWARD</span><span class="amt">{reward}</span><span class="per">/YR</span></div>
-  <div style="width:100%"><span class="est fit" data-max="19">ESTIMATED POTENTIAL SAVINGS{(' · ' + esc(p['basis'])) if p['basis'] else ''}</span></div>
+  <div class="rewardbox"><span class="rw">REWARD</span><span class="amt">{reward}</span><span class="per">{p['per_label']}</span></div>
+  <div style="width:100%"><span class="est fit" data-max="19">ESTIMATED POTENTIAL SAVINGS{(' · ' + esc(p['plus'])) if p['plus'] else ''}{(' · ' + esc(p['basis'])) if p['basis'] else ''}</span></div>
   <div class="foot"><span>{foot_l}</span>{badge_svg(92)}<span>HANDS OFF MY WALLET</span></div>
  </div></div>
 </div>
 <div class="nail" style="left:70px;top:58px"></div><div class="nail" style="right:70px;top:58px"></div>
 <div class="nail" style="left:72px;bottom:56px"></div><div class="nail" style="right:74px;bottom:58px"></div>
 <div class="hole" style="right:130px;top:350px"></div>
-{sample_stamp(p, 'right:86px;bottom:130px')}"""
+{sample_stamp(p, 'right:64px;top:480px')}"""
     else:
         css = """
 .sheet{left:36px;top:28px;right:36px;bottom:28px}
@@ -263,7 +272,7 @@ ol li{margin:4px 0;padding-left:128px;text-indent:-128px}
 ol{list-style:none;font-family:Elite;font-size:27px;line-height:1.28;margin-top:10px;flex:1;display:flex;flex-direction:column;justify-content:center}
 ol li{margin:10px 0;padding-left:122px;text-indent:-122px}
 .cn{display:inline-block;width:122px;text-indent:0;font-size:20px;letter-spacing:1px}
-.rewardbox{border-top:3px double;padding-top:4px;display:flex;align-items:center;justify-content:center;gap:18px}
+.rewardbox{border-top:3px double;padding-top:4px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:18px}
 .rw{font-family:Rye;font-size:44px}
 .amt{font-family:Rye;font-size:104px;color:%(RED)s;line-height:1}
 .per{font-family:Rye;font-size:36px;color:%(RED)s}
@@ -284,8 +293,8 @@ ol li{margin:10px 0;padding-left:122px;text-indent:-122px}
    <div class="sub"><span class="fit" data-max="30">FOR CRIMES AGAINST YOUR WALLET</span></div>
    <div class="charge">— CHARGED WITH —</div>
    <ol>{crimes}</ol>
-   <div class="rewardbox"><span class="rw">REWARD</span><span class="amt">{reward}</span><span class="per">/YR</span></div>
-   <div style="width:100%"><span class="est fit" data-max="16">ESTIMATED POTENTIAL SAVINGS{(' · ' + esc(p['basis'])) if p['basis'] else ''}</span></div>
+   <div class="rewardbox"><span class="rw">REWARD</span><span class="amt">{reward}</span><span class="per">{p['per_label']}</span></div>
+   <div style="width:100%"><span class="est fit" data-max="16">ESTIMATED POTENTIAL SAVINGS{(' · ' + esc(p['plus'])) if p['plus'] else ''}{(' · ' + esc(p['basis'])) if p['basis'] else ''}</span></div>
    <div class="foot"><span>{foot_l}</span>{badge_svg(64)}<span>HANDS OFF MY WALLET</span></div>
   </div>
  </div></div>
@@ -296,12 +305,17 @@ ol li{margin:10px 0;padding-left:122px;text-indent:-122px}
 {sample_stamp(p, 'left:128px;bottom:52px', 13)}"""
     return page(W, H, seed, body, css)
 
+def bounty_text(p):
+    if p["per_label"] == "ONCE":
+        return f"{money(p['reward'])} one-time"
+    return f"{money(p['reward'])}/yr" + (f" + {money(p['reward_once'])} one-time" if p["plus"] else "")
+
 def wanted_caption(p):
     who = p["merchant_disp"] if not p["anon"] else p["merchant_disp"].lower()
     lead = p["crimes"][0].rstrip(".") if p["crimes"] else "sneaking charges past me"
     return (f"My inbox sheriff just slapped a WANTED poster on {who}. "
             f"Crime: {lead[0].lower() + lead[1:] if lead else lead}. "
-            f"Bounty: ~{money(p['reward'])}/yr in potential savings (estimate). "
+            f"Bounty: ~{bounty_text(p)} in potential savings (estimate). "
             f"Posse up. #MoneyWatchdog")
 
 # ---------------------------------------------------------------- RAP SHEET (monthly)
@@ -374,7 +388,7 @@ td.st span{{display:inline-block;font-family:Elite;font-size:{int(18*k)}px;lette
         inner = f"""<div class="hdr">{badge_svg(150)}<div><div style="width:100%"><span class="ttl fit" data-max="150">RAP SHEET</span></div>
 <div class="ttl2">SHERIFF'S MONTHLY REPORT</div><div class="ttl2" style="margin-top:2px;font-family:Rye;letter-spacing:3px">{esc(p['period']).upper()}</div></div></div>
 {stats}<div class="lineup">THE LINEUP</div><table>{trs}</table>{mw}
-<div class="fine">Bounties are estimates from amounts in the emails, annualized. Collected = items you marked handled.</div>"""
+<div class="fine">Estimates from amounts in the emails (recurring per year, one-time once). Collected = items you marked handled.</div>"""
     else:
         css += """.two{display:grid;grid-template-columns:300px 1fr;gap:30px;flex:1;min-height:0}
 .two .stats{flex-direction:column;margin:10px 0 0;gap:8px}
@@ -388,7 +402,7 @@ td.st span{{display:inline-block;font-family:Elite;font-size:{int(18*k)}px;lette
 <div style="text-align:center">{badge_svg(92)}</div><div style="width:100%;text-align:center"><span class="ttl fit" data-max="64" style="text-align:center">RAP SHEET</span></div>
 <div class="ttl2" style="text-align:center;font-size:15px;letter-spacing:2px;margin-top:4px;white-space:nowrap">SHERIFF'S MONTHLY REPORT</div><div style="text-align:center;font-family:Rye;font-size:18px;letter-spacing:3px">{esc(p['period']).upper()}</div>{stats}</div>
 <div style="display:flex;flex-direction:column;min-width:0"><div class="lineup">THE LINEUP</div><table>{trs}</table>{mw}
-<div class="fine">Bounties are estimates from amounts in the emails, annualized. Collected = items you marked handled.</div></div></div>"""
+<div class="fine">Estimates from amounts in the emails (recurring per year, one-time once). Collected = items you marked handled.</div></div></div>"""
     body = f"""<div class="sheet">{paper(seed, .8)}<div class="ink"><div class="col">{inner}</div></div></div>
 <div class="nail" style="left:{70 if port else 52}px;top:{58 if port else 40}px"></div><div class="nail" style="right:{70 if port else 52}px;top:{58 if port else 40}px"></div>
 {sample_stamp(p, '%s' % ('right:90px;top:84px' if port else 'left:96px;bottom:60px'), 15 if port else 12)}"""
